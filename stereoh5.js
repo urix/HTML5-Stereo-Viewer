@@ -31,14 +31,14 @@ var stereoDefType = "stereoRL";
 var stereoiOS = false;
 var stereourl = "http://urixblog.com/html5-stereo-viewer";
 
-function stereoPlayerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
+function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	/*
-	Mode		- stereo mode (0..8). Default: 5
+	Mode		- stereo mode (0..9). Default: 5
 	Swap		- swap left and right sides (true, false). Default: false
 	BGColor		- backgroung color (0,1,2) for Black, Gray and White. Default: 0
 	Caption		- show captions (true, false). Default: true
 	CaptionSrc	- caption text source name ("alt", "title"). Default: "alt"
-	Type		- default stereo images type ("stereoLR", "stereoRL", ""), for images with id="stereo". The value "" corresponds to "stereoRL"
+	Type		- default stereo images type ("anaglyph", "flat", "stereoLR", "stereoRL", ""), for images with id="stereo". The value "" corresponds to "stereoRL"
 	*/
 
 	if (Caption != undefined)
@@ -55,11 +55,24 @@ function stereoPlayerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	stereoiOS = (navigator.appVersion.indexOf("iPhone") != -1) | (navigator.appVersion.indexOf("iPad") != -1) | (navigator.appVersion.indexOf("iPod") != -1);
 	if (stereoiOS)
 		stereoNav = 0;
+		
+	if (document.getElementById("stereoViewer")) {
+		document.body.insertBefore(document.getElementById("stereoViewer"), document.body.firstChild);
+		document.body.removeChild(document.getElementById("stereoViewer"));
+	};
 
-	document.getElementById("stereoPlayer").innerHTML = '\
-			<meta name="apple-mobile-web-app-capable" content="yes" />\
-			<meta name=”viewport” content=”user-scalable=no, width=device-width” />\
-			<div id="stereoCanvasdiv" style="" onmouseover="stereoDrawControls(event)" onmousemove="stereoDrawControls(event);" onmouseout="stereoDrawControls(event);" onmouse="stereoDrawControls(event);" onclick="stereoMouseClick(event);" ondblclick="if (stereoiOS) stereoPlayerOptionsOpen(!stereoOptVis);" >\
+	var div = document.createElement("div");
+	div.id = "stereoViewer";
+	div.style.position = "fixed";
+	div.style.zIndex = 999990;
+	div.style.top = 0;
+	div.style.left = 0;
+	div.style.backgroundColor = "#000";
+	div.style.visibility = "visible";
+	div.style.fontFamily = "arial,verdana,helvetica";
+
+	div.innerHTML = '\
+			<div id="stereoCanvasdiv" style="" onmouseover="stereoDrawControls(event)" onmousemove="stereoDrawControls(event);" onmouseout="stereoDrawControls(event);" onmouse="stereoDrawControls(event);" onclick="stereoMouseClick(event);" ondblclick="if (stereoiOS) stereoViewerOptionsOpen(!stereoOptVis);" >\
 				<canvas id="stereoCanvas"></canvas>\
 			</div>\
 			<div id="stereoControls" style="z-index:2; position:fixed; background-color:#fff; opacity:.9; padding:16px; margin:0px; border:1px; border-style:solid; border-color:black; visibility:hidden; left:16px; top:16px;\
@@ -70,7 +83,7 @@ function stereoPlayerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 					-ms-filter: "progid:DXImageTransform.Microsoft.Blur(PixelRadius=3,MakeShadow=true,ShadowOpacity=0.30)";">\
 				<!--input type="button" value="Save As (FF only)" onclick="stereoSaveAs();" /><br /-->\
 				<center>\
-				<input type="button" value="Close Viewer" onclick="stereoPlayerClose();" />\
+				<input type="button" value="Close Viewer" onclick="stereoViewerClose();" />\
 				<input type="button" value="Help" onclick="stereoHelpOpen();" />\
 				<input type="button" value="?" onclick="stereoAboutOpen();" /></center>\
 				<hr /><br />\
@@ -124,10 +137,12 @@ function stereoPlayerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 				<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" title="This work is licensed under a Creative Commons Attribution 3.0 Unported License"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/88x31.png" /></a>\
 			</div>';
 			
+	document.body.insertBefore(div, document.body.firstChild);
+
 	if (stereoiOS) {
 		document.getElementById("stereoControls").innerHTML = '\
-			<center><input type="button" value="Hide Options" onclick="stereoPlayerOptionsOpen(false);" />\
-			<input type="button" value="Close Viewer" onclick="stereoPlayerClose();" /></center>\
+			<center><input type="button" value="Hide Options" onclick="stereoViewerOptionsOpen(false);" />\
+			<input type="button" value="Close Viewer" onclick="stereoViewerClose();" /></center>\
 			<hr />\
 			<b>Mode:</b> \
 			<select onchange="stereoModeChange(0);" id="modeselect">\
@@ -162,8 +177,8 @@ function stereoPlayerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	};
 
 	document.body.onkeyup = function(event){stereoKeyPress(event);};
-	document.body.onmousewheel = function(event){stereoPlayerClose(event);};
-	document.body.onscroll = function(event){stereoPlayerClose(event);};
+	document.body.onmousewheel = function(event){stereoViewerClose(event);};
+	document.body.onscroll = function(event){stereoViewerClose(event);};
 	document.body.onorientationchange = function(event){stereoDrawImage();};
 
 	document.getElementById("stereoControls").style.zIndex = 999991;
@@ -175,14 +190,10 @@ function stereoPlayerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	document.getElementById("stereoCanvas").width = document.documentElement.clientWidth;
 	document.getElementById("stereoCanvas").height = document.documentElement.clientHeight;
 
-	document.getElementById("stereoPlayer").style.position = "fixed";
-	document.getElementById("stereoPlayer").style.zIndex = 999990;
-	document.getElementById("stereoPlayer").style.bottom = 0;
-	document.getElementById("stereoPlayer").style.right = 0;
-	document.getElementById("stereoPlayer").style.backgroundColor = "#000";
-	document.getElementById("stereoPlayer").style.visibility = "visible";
-	document.getElementById("stereoPlayer").style.fontFamily = "arial,verdana,helvetica";
-	
+	document.getElementById("stereoViewer").style.bottom = 0;
+	document.getElementById("stereoViewer").style.right = 0;
+	//document.getElementById("stereoViewer").style.visibility = "visible";
+
 	document.getElementById("stereoNav").checked = stereoNav != 0;
 	for (var i = 0; i <= 9; i++)
 		if (stereoiOS)
@@ -211,11 +222,9 @@ function stereoPlayerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	stereoDrawImage();
 };
 
-function stereoPlayerClose() {
-	stereoPlayerOptionsOpen(false);
-	document.getElementById("stereoPlayer").width = 0;
-	document.getElementById("stereoPlayer").height = 0;
-	document.getElementById('stereoPlayer').style.visibility = "hidden";
+function stereoViewerClose() {
+	stereoViewerOptionsOpen(false);
+	document.body.removeChild(document.getElementById("stereoViewer"));
 
 	if (stereoiOS) {
 		meta = document.createElement("meta");
@@ -280,7 +289,7 @@ function stereoMouseClick(event) {
 			b = true;
 		};
 	/*}
-	/*else
+	/*else //buttons
 		if (stereoNav > 0) {
 			if ((mx >= 0) && (mx < stereoNav) && (my >= 0) && (my < cnvs.height)) {  //left
 				stereoPrevImage();
@@ -293,11 +302,11 @@ function stereoMouseClick(event) {
 			}
 		};*/
 	if (!b) {	//center
-		stereoPlayerOptionsOpen(!stereoOptVis);
+		stereoViewerOptionsOpen(!stereoOptVis);
 	}
 };
 
-function stereoPlayerOptionsOpen(value) {
+function stereoViewerOptionsOpen(value) {
 	if (value)
 		var s = "visible"
 	else
@@ -467,8 +476,8 @@ function stereoDrawImage() {
 	var cnvs = document.getElementById('stereoCanvas');
 	var ctx = cnvs.getContext('2d');
 
-	var cnvsheight = document.getElementById("stereoPlayer").clientHeight;//cnvs.height;
-	var cnvswidth = document.getElementById("stereoPlayer").clientWidth;//cnvs.height;
+	var cnvsheight = document.getElementById("stereoViewer").clientHeight;//cnvs.height;
+	var cnvswidth = document.getElementById("stereoViewer").clientWidth;//cnvs.height;
 	document.getElementById("stereoCanvasdiv").height = cnvsheight;
 	document.getElementById("stereoCanvasdiv").width = cnvswidth;
 	document.getElementById("stereoCanvas").height = cnvsheight;
@@ -489,7 +498,7 @@ function stereoDrawImage() {
 			ctx.fillStyle = "rgba(255, 255, 255, 1)";
 	};
 	ctx.fillRect(stereoNav, 0, cnvswidth - stereoNav * 2, cnvsheight);
-	document.getElementById("stereoPlayer").style.backgroundColor = ctx.fillStyle;
+	document.getElementById("stereoViewer").style.backgroundColor = ctx.fillStyle;
 		
 	if (images.length > 0) {
 		var buf, bufctx, iData1, iData2;
@@ -574,14 +583,16 @@ function stereoDrawImage() {
 		};
 		
 		switch (imagesT[imageN]) {
+			case "flat":
+			case "anaglyph":
+				stereoMode_ = 0;
+				stereoSwap_ = false;
+				break;
 			case "stereoRL":
 			case "stereoLR":
 				stereoMode_ = stereoMode;
 				stereoSwap_ = stereoSwap;
 				break;
-			case "anaglyph":
-				stereoMode_ = 4;
-				stereoSwap_ = stereoSwap;
 		};
 
 		if (!img.complete) {
@@ -618,7 +629,10 @@ function stereoDrawImage() {
 						ctx.drawImage(img, img.width / 2, 0, img.width / 2, img.height,
 											(cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2, imw / 2, imh)
 					};
-					_drawText(2);
+					if ((imagesT[imageN] == "flat") | (imagesT[imageN] == "anaglyph"))
+						_drawText(1)
+					else
+						_drawText(2);
 					break;
 					
 				case 2: //only Left
@@ -816,6 +830,7 @@ function stereoCountImages() {
 	var j, n = 0;
 	for (j = 0; j < document.images.length; j++) {
 		if ((document.images[j].getAttribute("id") == "anaglyph") |
+			(document.images[j].getAttribute("id") == "flat") |
 			(document.images[j].getAttribute("id") == "stereo") |
 			(document.images[j].getAttribute("id") == "stereoLR") |
 			(document.images[j].getAttribute("id") == "stereoRL")) {
@@ -887,10 +902,10 @@ function stereoKeyPress(e) {
 		// Controls
 		case 16:
 		case 191:
-			stereoPlayerHelpOpen();
+			stereoViewerHelpOpen();
 			break; 
 		case 27:
-			stereoPlayerClose();
+			stereoViewerClose();
 			break; 
 		// Navigation
 		case 37: 
