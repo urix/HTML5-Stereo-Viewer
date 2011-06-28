@@ -827,16 +827,25 @@ function stereoDrawImage() {
 };
 
 function stereoCountImages() {
+	function getClassName(obj, c) {
+		if (obj.className) {
+			var arrList = obj.className.split(" ");
+			for (var i = 0; i < arrList.length; i++) {
+				for (var j = 0; j < c.length; j++)
+					if (arrList[i] == c[j])
+						return c[j];
+			}
+		}
+		return "";
+	};
+
 	var j, n = 0;
 	for (j = 0; j < document.images.length; j++) {
-		if ((document.images[j].getAttribute("id") == "anaglyph") |
-			(document.images[j].getAttribute("id") == "flat") |
-			(document.images[j].getAttribute("id") == "stereo") |
-			(document.images[j].getAttribute("id") == "stereoLR") |
-			(document.images[j].getAttribute("id") == "stereoRL")) {
+		var cn = getClassName(document.images[j], new Array("anaglyph", "flat", "stereo", "stereoLR", "stereoRL"));
+		if (cn != "") {
 			images[n] = document.images[j].src;
 			imagesC[n] = document.images[j].getAttribute(stereoCaptionSrc);
-			imagesT[n] = document.images[j].getAttribute("id");
+			imagesT[n] = cn;
 			if (imagesT[n] == "stereo")
 				imagesT[n] = stereoDefType;
 			if (n == 0) {
