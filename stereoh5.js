@@ -2,7 +2,7 @@
 
 HTML5 Stereo Viewer
 
-version 1.0
+version 1.1
 
 Copyright (C) 2011 Yury Golubinsky
 
@@ -13,7 +13,7 @@ visit http://creativecommons.org/licenses/by/3.0/
 
 */
 
-var stereover = "1.0";
+var stereover = "1.1";
 var images = new Array();
 var imagesT = new Array();
 var imagesC = new Array();
@@ -29,11 +29,13 @@ var stereoCaption = true;
 var stereoCaptionSrc = "alt";
 var stereoDefType = "stereoRL";
 var stereoiOS = false;
+var stereoIE = false;
 var stereourl = "http://urixblog.com/html5-stereo-viewer";
+var stereroModes = 11;
 
 function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	/*
-	Mode		- stereo mode (0..9). Default: 5
+	Mode		- stereo mode (0..9...). Default: 5
 	Swap		- swap left and right sides (true, false). Default: false
 	BGColor		- backgroung color (0,1,2) for Black, Gray and White. Default: 0
 	Caption		- show captions (true, false). Default: true
@@ -47,7 +49,7 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 		stereoCaptionSrc = CaptionSrc;
 	if (Type != "")
 		stereoDefType = Type;
-	if ((Mode != undefined) & (Mode >= 0) & (Mode <= 8))
+	if ((Mode != undefined) & (Mode >= 0) & (Mode <= stereroModes))
 		stereoMode = Mode;
 	if (Swap != undefined)
 		stereoSwap = Swap;
@@ -56,6 +58,8 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	if (stereoiOS)
 		stereoNav = 0;
 		
+	stereoIE = (/MSIE (\d+\.\d+);/.test(navigator.userAgent));
+
 	if (document.getElementById("stereoViewer")) {
 		document.body.insertBefore(document.getElementById("stereoViewer"), document.body.firstChild);
 		document.body.removeChild(document.getElementById("stereoViewer"));
@@ -88,17 +92,21 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 				<input type="button" value="?" onclick="stereoAboutOpen();" /></center>\
 				<hr /><br />\
 				<b>Mode:</b><br /><br />\
-				<input type="radio" id="mode0" name="mode" value="Right Left" onclick="stereoModeChange(0);" /> Right Left (0)<br />\
-				<input type="radio" id="mode1" name="mode" value="Left Right" onclick="stereoModeChange(1);" /> Left Right (1)<br />\
-				<input type="radio" id="mode2" name="mode" value="Left" onclick="stereoModeChange(2);" /> Left (2)<br />\
-				<input type="radio" id="mode3" name="mode" value="Right" onclick="stereoModeChange(3);" /> Right (3)<br />\
-				<input type="radio" id="mode4" name="mode" value="Color Anaglyph" onclick="stereoModeChange(4);" checked /> Color Anaglyph (4)<br />\
-				<input type="radio" id="mode5" name="mode" value="Optimized Color Anaglyph 1" onclick="stereoModeChange(5);" /> Optimized Anaglyph 1 (5)<br />\
-				<input type="radio" id="mode6" name="mode" value="Optimized Color Anaglyph 2" onclick="stereoModeChange(6);" /> Optimized Anaglyph 2 (6)<br />\
-				<input type="radio" id="mode7" name="mode" value="Gray Anaglyph" onclick="stereoModeChange(7);" /> Gray Anaglyph (7)<br />\
-				<input type="radio" id="mode8" name="mode" value="True Anaglyph" onclick="stereoModeChange(8);" /> True Anaglyph (8)<br />\
-				<input type="radio" id="mode9" name="mode" value="Interlaced" onclick="stereoModeChange(9);" /> Interlaced (9)<br />\
-				<br/>\
+				<select onchange="stereoModeChange(0);" id="modeselect">\
+				<option>Right Left (0)</option>\
+				<option>Left Right (1)</option>\
+				<option>Left (2)</option>\
+				<option>Right (3)</option>\
+				<option>Color Anaglyph (4)</option>\
+				<option>Optimized Anaglyph 1 (5)</option>\
+				<option>Optimized Anaglyph 2 (6)</option>\
+				<option>Gray Anaglyph (7)</option>\
+				<option>Half Color Anaglyph (8)</option>\
+				<option>True Anaglyph (9)</option>\
+				<option>Interlaced</option>\
+				<option>Interlaced vertical</option>\
+				</select>\
+				<br/><br/>\
 				<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoSwap" /> Swap<br />\
 				<br /><hr /><br />\
 				<b>Background color:</b><br /><br />\
@@ -154,8 +162,10 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 			<option>Optimized Anaglyph 1</option>\
 			<option>Optimized Anaglyph 2</option>\
 			<option>Gray Anaglyph</option>\
+			<option>Half Color Anaglyph</option>\
 			<option>True Anaglyph</option>\
 			<option>Interlaced</option>\
+			<option>Interlaced vertical</option>\
 			</select>\
 			<br/>\
 			<input type="checkbox" value="" onclick="stereoBG(stereoBGcolor);" id="stereoNav" style="visibility:hidden"/>\
@@ -195,11 +205,8 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	//document.getElementById("stereoViewer").style.visibility = "visible";
 
 	document.getElementById("stereoNav").checked = stereoNav != 0;
-	for (var i = 0; i <= 9; i++)
-		if (stereoiOS)
-			document.getElementById("modeselect").options[i].selected = stereoMode == i
-		else
-			document.getElementById("mode"+i).checked = stereoMode == i;
+	for (var i = 0; i <= stereroModes; i++)
+		document.getElementById("modeselect").options[i].selected = stereoMode == i;
 	document.getElementById("stereoSwap").checked = stereoSwap;
 	document.getElementById("stereoCap").checked = stereoCaption;
 
@@ -460,6 +467,19 @@ function stereoDrawImage() {
 		imh = Math.round(imh);
 	};
 
+	function prepareWH2iv() {
+		if (((cnvswidth - stereoNav * 2) / (cnvsheight - mc)) >= (img.width / img.height / 2)) {
+			imh = cnvsheight - mc;
+			imw = imh * (img.width / img.height) / 2;
+		}
+		else {
+			imw = cnvswidth - stereoNav * 2;
+			imh = imw * (img.height / img.width) * 2;
+		};
+		imw = Math.round(imw / 2);
+		imh = Math.round(imh);
+	};
+
 	function prepareWH() {
 		if (((cnvswidth - stereoNav * 2) / (cnvsheight - mc)) >= (img.width / img.height)) {
 			imh = cnvsheight - mc;
@@ -514,7 +534,10 @@ function stereoDrawImage() {
 			if (!inter)
 				imageData = ctx.createImageData(imw, imh)
 			else
-				imageData = ctx.createImageData(imw, imh * 2);
+				if (stereoMode_ == 10)
+					imageData = ctx.createImageData(imw, imh * 2)
+				else
+					imageData = ctx.createImageData(imw * 2, imh);
 			
 			if (imagesT[imageN] == "stereoLR")
 				stereoSwap_ = !stereoSwap_;
@@ -567,16 +590,17 @@ function stereoDrawImage() {
 					case 2:
 						ctx.fillStyle = "rgba(128, 128, 128, 1)";
 				};
+				var h = ctx.measureText("Wg").width;
 				if (num == 1) {
 					var s = _getLines(imagesC[imageN], cnvswidth - 36);
 					for (var i = 0; i < s.length; i++)
-						ctx.fillText(s[i], cnvswidth / 2, cnvsheight / 2 + imh / 2 + i * 14)
+						ctx.fillText(s[i], cnvswidth / 2, cnvsheight / 2 + imh / 2 + i * h)
 				} else {
 					var s = _getLines(imagesC[imageN], imw / 2 - 36);
 					for (var i = 0; i < s.length; i++) {
 						var e = ctx.measureText(s[i]).height;
-						ctx.fillText(s[i], (cnvswidth - imw) / 2 + imw / 4, cnvsheight / 2 + imh / 2 + i * 14);
-						ctx.fillText(s[i], cnvswidth / 2 + imw / 4, cnvsheight / 2 + imh / 2 + i * 14)
+						ctx.fillText(s[i], (cnvswidth - imw) / 2 + imw / 4, cnvsheight / 2 + imh / 2 + i * h);
+						ctx.fillText(s[i], cnvswidth / 2 + imw / 4, cnvsheight / 2 + imh / 2 + i * h)
 					}
 				}
 			}
@@ -595,6 +619,36 @@ function stereoDrawImage() {
 				break;
 		};
 
+		if (stereoIE) {
+			ctx.font = "bold 12px sans-serif";
+			ctx.textAlign = "center";
+			ctx.textBaseline = "middle";
+			switch (stereoBGcolor) {
+				case 0:
+					ctx.fillStyle = "rgba(255, 128, 128, 1)";
+					break;
+				case 1:
+					ctx.fillStyle = "rgba(255, 192, 192, 1)";
+					break;
+				case 2:
+					ctx.fillStyle = "rgba(255, 128, 128, 1)";
+			};
+			ctx.fillText("Internet Explorer is not supported in this version", cnvswidth / 2, cnvsheight / 2);
+			switch (stereoBGcolor) {
+				case 0:
+					ctx.fillStyle = "rgba(128, 128, 128, 1)";
+					break;
+				case 1:
+					ctx.fillStyle = "rgba(255, 255, 255, 1)";
+					break;
+				case 2:
+					ctx.fillStyle = "rgba(128, 128, 128, 1)";
+			};
+			var h = ctx.measureText("Wg").width;
+			ctx.fillText("Press Esc to close the slideshow", cnvswidth / 2, cnvsheight / 2 + h * 2);
+			ctx.fillText("Please use Safari, Chrome, Firefox or Opera", cnvswidth / 2, cnvsheight / 2 + h * 3);
+		}
+		else
 		if (!img.complete) {
 			img.onLoad = stereoDrawImage;
 			ctx.font = "bold 12px sans-serif";
@@ -679,26 +733,6 @@ function stereoDrawImage() {
 					_drawText(1);
 					break;
 					
-				/*case 5: //half color anaglyph
-					prepareWH2();
-					prepareAnaglyphData();
-					
-					for (x = 0; x < imw; x++) {
-						for (y = 0; y < imh; y++) {
-							   index = (x + y * imageData.width) * 4;
-							// Data2 - left; Data1 - right
-							r = iData2.data[index+0] * 0.299 + iData2.data[index+1] * 0.587 + iData2.data[index+2] * 0.114;
-							g = iData1.data[index+1];
-							b = iData1.data[index+2];
-							r = Math.min(Math.max(r, 0), 255);
-							setPixel(imageData, x, y, r, g, b, 0xFF);
-						}
-					}
-				
-					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
-					_drawText(1);
-					break;*/
-					
 				case 5: //optimized color anaglyph
 					prepareWH2();
 					prepareAnaglyphData(false);
@@ -766,7 +800,27 @@ function stereoDrawImage() {
 					_drawText(1);
 					break;
 					
-				case 8: //true anaglyph
+				case 8: //half color anaglyph
+					prepareWH2();
+					prepareAnaglyphData();
+					
+					for (x = 0; x < imw; x++) {
+						for (y = 0; y < imh; y++) {
+							   index = (x + y * imageData.width) * 4;
+							// Data2 - left; Data1 - right
+							r = iData2.data[index+0] * 0.299 + iData2.data[index+1] * 0.587 + iData2.data[index+2] * 0.114;
+							g = iData1.data[index+1];
+							b = iData1.data[index+2];
+							r = Math.min(Math.max(r, 0), 255);
+							setPixel(imageData, x, y, r, g, b, 0xFF);
+						}
+					}
+				
+					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
+					_drawText(1);
+					break;
+					
+				case 9: //true anaglyph
 					prepareWH2();
 					prepareAnaglyphData(false);
 					
@@ -787,11 +841,11 @@ function stereoDrawImage() {
 					_drawText(1);
 					break;
 					
-				case 9: //interlaced
+				case 10: //interlaced
 					prepareWH2i();
 					prepareAnaglyphData(true);
 					for (y = 0; y < imh; y++)
-						for (x = 1; x < imw - 1; x++) {
+						for (x = 0; x < imw; x++) {
 							// Data2 - left; Data1 - right
 							index = (x + y * imageData.width) * 4;
 							setPixel(imageData, x, y * 2, iData1.data[index+0], iData1.data[index+1], iData1.data[index+2], 0xFF);
@@ -800,6 +854,23 @@ function stereoDrawImage() {
 						};
 				
 					imh = imh * 2;
+					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
+					_drawText(1);
+					break;
+					
+				case 11: //interlaced vertical
+					prepareWH2iv();
+					prepareAnaglyphData(true);
+					for (x = 0; x < imw; x++)
+						for (y = 0; y < imh; y++) {
+							// Data2 - left; Data1 - right
+							index = (x + y * imw) * 4;
+							setPixel(imageData, x * 2, y, iData1.data[index+0], iData1.data[index+1], iData1.data[index+2], 0xFF);
+							index = (x + y * imw) * 4;
+							setPixel(imageData, x * 2 + 1, y, iData2.data[index+0], iData2.data[index+1], iData2.data[index+2], 0xFF);
+						};
+				
+					imw = imw * 2;
 					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
 					_drawText(1);
 					break;
@@ -873,15 +944,11 @@ function stereoNextImage() {
 };
 
 function stereoModeChange(value) {
-	if (stereoiOS) {
-		for (var i = 0; i <= 9; i++)
-			if (document.getElementById("modeselect").options[i].selected) {
-				stereoMode = i;
-				break;
-			}
-	}
-	else
-		stereoMode = value;
+	for (var i = 0; i <= stereroModes; i++)
+		if (document.getElementById("modeselect").options[i].selected) {
+			stereoMode = i;
+			break;
+		};
 	stereoSwap = document.getElementById("stereoSwap").checked;
 	stereoCaption = document.getElementById("stereoCap").checked;
 	stereoDrawImage()
@@ -900,11 +967,8 @@ function stereoKeyPress(e) {
 	function _mode(value) {
 		stereoMode = value;
 		stereoDrawImage();
-		for (var i = 0; i <= 9; i++)
-			if (stereoiOS)
-				document.getElementById("modeselect").options[i].selected = stereoMode == i
-			else
-				document.getElementById("mode"+i).checked = stereoMode == i;
+		for (var i = 0; i <= stereroModes; i++)
+			document.getElementById("modeselect").options[i].selected = stereoMode == i;
 	};
 	
 	switch (keynum) {
