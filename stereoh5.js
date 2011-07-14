@@ -2,7 +2,7 @@
 
 HTML5 Stereo Viewer
 
-version 1.1
+version 1.2
 
 Copyright (C) 2011 Yury Golubinsky
 
@@ -13,7 +13,7 @@ visit http://creativecommons.org/licenses/by/3.0/
 
 */
 
-var stereover = "1.1";
+var stereover = "1.2";
 var images = new Array();
 var imagesT = new Array();
 var imagesC = new Array();
@@ -31,7 +31,8 @@ var stereoDefType = "stereoRL";
 var stereoiOS = false;
 var stereoIE = false;
 var stereourl = "http://urixblog.com/html5-stereo-viewer";
-var stereroModes = 11;
+var stereourlvis = "http://urixblog.com/...";
+var stereoModes = 11;
 
 function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	/*
@@ -40,7 +41,7 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	BGColor		- backgroung color (0,1,2) for Black, Gray and White. Default: 0
 	Caption		- show captions (true, false). Default: true
 	CaptionSrc	- caption text source name ("alt", "title"). Default: "alt"
-	Type		- default stereo images type ("anaglyph", "flat", "stereoLR", "stereoRL", ""), for images with id="stereo". The value "" corresponds to "stereoRL"
+	Type		- default stereo images type ("anaglyph", "flat", "stereoLR", "stereoRL", ""), for images with class="stereo". The value "" corresponds to "stereoRL"
 	*/
 
 	if (Caption != undefined)
@@ -49,7 +50,7 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 		stereoCaptionSrc = CaptionSrc;
 	if (Type != "")
 		stereoDefType = Type;
-	if ((Mode != undefined) & (Mode >= 0) & (Mode <= stereroModes))
+	if ((Mode != undefined) & (Mode >= 0) & (Mode <= stereoModes))
 		stereoMode = Mode;
 	if (Swap != undefined)
 		stereoSwap = Swap;
@@ -106,8 +107,9 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 				<option>Interlaced</option>\
 				<option>Interlaced vertical</option>\
 				</select>\
-				<br/><br/>\
-				<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoSwap" /> Swap<br />\
+				<br /><br />\
+				<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoSwap" /> Swap<br /><br />\
+				<input type="button" id="stereoSaveDef" value="Save as Default" onclick="stereoSaveDef();" />\
 				<br /><hr /><br />\
 				<b>Background color:</b><br /><br />\
 				<input type="button" value="White" onclick="stereoBG(2);" />\
@@ -167,9 +169,10 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 			<option>Interlaced</option>\
 			<option>Interlaced vertical</option>\
 			</select>\
-			<br/>\
+			<br />\
 			<input type="checkbox" value="" onclick="stereoBG(stereoBGcolor);" id="stereoNav" style="visibility:hidden"/>\
-			<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoSwap" /> Swap\
+			<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoSwap" /> Swap<br />\
+			<input type="button" id="stereoSaveDef" value="Save as Default" onclick="stereoSaveDef();" />\
 			<br />\
 			<b>Background color:</b><br />\
 			<input type="button" value="White" onclick="stereoBG(2);" />\
@@ -178,9 +181,9 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 			<br />\
 			<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoCap" /> Show captions<br />\
 			<br />\
-				<center><b>About: HTML5 Stereo Viewer '+stereover+'</b><br />\
+				<center><b>HTML5 Stereo Viewer '+stereover+'</b><br />\
 				(C) 2011 Yury Golubinsky<br />\
-				<a href="'+stereourl+'">'+stereourl+'</a>\
+				<a href="'+stereourl+'">'+stereourlvis+'</a>\
 				<br /><br />\
 				<a rel="license" href="http://creativecommons.org/licenses/by/3.0/"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/88x31.png" /></a>\
 			'
@@ -205,8 +208,17 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	//document.getElementById("stereoViewer").style.visibility = "visible";
 
 	document.getElementById("stereoNav").checked = stereoNav != 0;
-	for (var i = 0; i <= stereroModes; i++)
+
+	stereoCheckCookie();
+	var sm = stereoGetCookie();
+	if ((sm >= 0) && (sm <= stereoModes)) {
+		stereoMode = sm;
+		stereoSwap = stereoGetCookieSwap() > 0;
+	};
+
+	for (var i = 0; i <= stereoModes; i++)
 		document.getElementById("modeselect").options[i].selected = stereoMode == i;
+
 	document.getElementById("stereoSwap").checked = stereoSwap;
 	document.getElementById("stereoCap").checked = stereoCaption;
 
@@ -224,7 +236,7 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 		if (!b)
 			document.getElementsByTagName("head")[0].appendChild(meta);
 	};
-
+	
 	stereoCountImages();
 	stereoDrawImage();
 };
@@ -944,7 +956,7 @@ function stereoNextImage() {
 };
 
 function stereoModeChange(value) {
-	for (var i = 0; i <= stereroModes; i++)
+	for (var i = 0; i <= stereoModes; i++)
 		if (document.getElementById("modeselect").options[i].selected) {
 			stereoMode = i;
 			break;
@@ -967,7 +979,7 @@ function stereoKeyPress(e) {
 	function _mode(value) {
 		stereoMode = value;
 		stereoDrawImage();
-		for (var i = 0; i <= stereroModes; i++)
+		for (var i = 0; i <= stereoModes; i++)
 			document.getElementById("modeselect").options[i].selected = stereoMode == i;
 	};
 	
@@ -1025,4 +1037,42 @@ function stereoBG(c) {
 	
 	stereoDrawImage();
 	stereoDrawControls()
+};
+
+function stereoSaveDef() {
+	if (stereoGetCookie() < 0)
+		stereoSetCookie(stereoMode, stereoSwap ? 1 : 0)
+	else
+		stereoSetCookie(-1, stereoSwap ? 1 : 0);
+	stereoCheckCookie();
+};
+
+function stereoCheckCookie() {
+	var sm = stereoGetCookie();
+	if ((sm >= 0) && (sm <= stereoModes))
+		document.getElementById("stereoSaveDef").value = "Forget Defaults"
+	else
+		document.getElementById("stereoSaveDef").value = "Save as Default";
+	document.getElementById("stereoSwap").checked = stereoGetCookieSwap() > 0;
+};
+
+function stereoSetCookie(m, s) {
+	document.cookie = "HTML5_STEREO_VIEWER=" + escape(m.toString());
+	document.cookie = "HTML5_STEREO_VIEWER_SWAP=" + escape(s.toString());
+};
+
+function stereoGetCookie() {
+	var a = document.cookie.split(";");
+	for (var i = 0; i < a.length; i++)
+		if (a[i].substr(0,a[i].indexOf("=")).trim() == "HTML5_STEREO_VIEWER")
+			return parseInt(unescape(a[i].substr(a[i].indexOf("=")+1)));
+	return -1;
+};
+
+function stereoGetCookieSwap() {
+	var a = document.cookie.split(";");
+	for (var i = 0; i < a.length; i++)
+		if (a[i].substr(0,a[i].indexOf("=")).trim() == "HTML5_STEREO_VIEWER_SWAP")
+			return parseInt(unescape(a[i].substr(a[i].indexOf("=")+1)));
+	return false;
 };
