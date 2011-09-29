@@ -2,7 +2,7 @@
 
 HTML5 Stereo Viewer
 
-version 1.2
+version 1.3
 
 Copyright (C) 2011 Yury Golubinsky
 
@@ -13,7 +13,7 @@ visit http://creativecommons.org/licenses/by/3.0/
 
 */
 
-var stereover = "1.2";
+var stereover = "1.3";
 var images = new Array();
 var imagesT = new Array();
 var imagesC = new Array();
@@ -33,6 +33,9 @@ var stereoIE = false;
 var stereourl = "http://urixblog.com/html5-stereo-viewer";
 var stereourlvis = "http://urixblog.com/...";
 var stereoModes = 11;
+var stereoGlasses = 0;
+	var sGlassesRedCyan = 0;
+	var sGlassesGreenMagenta = 1;
 
 function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	/*
@@ -106,8 +109,11 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 				<option>True Anaglyph (9)</option>\
 				<option>Interlaced</option>\
 				<option>Interlaced vertical</option>\
-				</select>\
-				<br /><br />\
+				</select><br />\
+				<select onchange="stereoGlassesChange();" id="stereoGlasses" />\
+				<option>Red-Cyan glasses</option>\
+				<option>Green-Magenta glasses</option>\
+				</select><br /><br />\
 				<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoSwap" /> Swap<br /><br />\
 				<input type="button" id="stereoSaveDef" value="Save as Default" onclick="stereoSaveDef();" />\
 				<br /><hr /><br />\
@@ -154,7 +160,7 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 			<center><input type="button" value="Hide Options" onclick="stereoViewerOptionsOpen(false);" />\
 			<input type="button" value="Close Viewer" onclick="stereoViewerClose();" /></center>\
 			<hr />\
-			<b>Mode:</b> \
+			<b>Mode:</b><br />\
 			<select onchange="stereoModeChange(0);" id="modeselect">\
 			<option>Right Left</option>\
 			<option>Left Right</option>\
@@ -168,19 +174,22 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 			<option>True Anaglyph</option>\
 			<option>Interlaced</option>\
 			<option>Interlaced vertical</option>\
-			</select>\
-			<br />\
+			</select><br />\
+			<select onchange="stereoGlassesChange();" id="stereoGlasses" />\
+			<option>Red-Cyan glasses</option>\
+			<option>Green-Magenta glasses</option>\
+			</select><br />\
 			<input type="checkbox" value="" onclick="stereoBG(stereoBGcolor);" id="stereoNav" style="visibility:hidden"/>\
 			<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoSwap" /> Swap<br />\
 			<input type="button" id="stereoSaveDef" value="Save as Default" onclick="stereoSaveDef();" />\
-			<br />\
+			<hr />\
 			<b>Background color:</b><br />\
 			<input type="button" value="White" onclick="stereoBG(2);" />\
 			<input type="button" value="Gray" onclick="stereoBG(1);" />\
 			<input type="button" value="Black" onclick="stereoBG(0);" /><br />\
 			<br />\
 			<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoCap" /> Show captions<br />\
-			<br />\
+			<hr />\
 				<center><b>HTML5 Stereo Viewer '+stereover+'</b><br />\
 				(C) 2011 Yury Golubinsky<br />\
 				<a href="'+stereourl+'">'+stereourlvis+'</a>\
@@ -214,10 +223,16 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	if ((sm >= 0) && (sm <= stereoModes)) {
 		stereoMode = sm;
 		stereoSwap = stereoGetCookieSwap() > 0;
+		stereoGlasses = stereoGetCookieGlasses();
 	};
 
 	for (var i = 0; i <= stereoModes; i++)
 		document.getElementById("modeselect").options[i].selected = stereoMode == i;
+
+	for (var i = 0; i < document.getElementById("stereoGlasses").options.length; i++)
+		document.getElementById("stereoGlasses").options[i].selected = stereoGlasses == i;
+
+	stereoCorrectAfterMode();
 
 	document.getElementById("stereoSwap").checked = stereoSwap;
 	document.getElementById("stereoCap").checked = stereoCaption;
@@ -258,26 +273,11 @@ function stereoViewerClose() {
 };
 
 function setPixel(imageData, x, y, r, g, b, a) {
-	index = (x + y * imageData.width) * 4;
-	imageData.data[index+0] = r;
-	imageData.data[index+1] = g;
-	imageData.data[index+2] = b;
-	imageData.data[index+3] = a;
-};
-
-function getR(imageData, x, y) {
-	index = (x + y * imageData.width) * 4;
-	return imageData.data[index+0];
-};
-
-function getG(imageData, x, y) {
-	index = (x + y * imageData.width) * 4;
-	return imageData.data[index+1];
-};
-
-function getB(imageData, x, y) {
-	index = (x + y * imageData.width) * 4;
-	return imageData.data[index+2];
+	var index = (x + y * imageData.width) * 4;
+	imageData.data[index++] = r;
+	imageData.data[index++] = g;
+	imageData.data[index++] = b;
+	imageData.data[index++] = a;
 };
 
 function stereoMouseClick(event) {
@@ -508,12 +508,18 @@ function stereoDrawImage() {
 	var cnvs = document.getElementById('stereoCanvas');
 	var ctx = cnvs.getContext('2d');
 
-	var cnvsheight = document.getElementById("stereoViewer").clientHeight;//cnvs.height;
-	var cnvswidth = document.getElementById("stereoViewer").clientWidth;//cnvs.height;
-	document.getElementById("stereoCanvasdiv").height = cnvsheight;
-	document.getElementById("stereoCanvasdiv").width = cnvswidth;
-	document.getElementById("stereoCanvas").height = cnvsheight;
-	document.getElementById("stereoCanvas").width = cnvswidth;
+	var cnvsheight = document.getElementById("stereoViewer").clientHeight;
+	var cnvswidth = document.getElementById("stereoViewer").clientWidth;
+	var elmnt = document.getElementById("stereoCanvasdiv");
+	//if (elmnt.height != cnvsheight)
+		elmnt.height = cnvsheight;
+	//if (elmnt.width != cnvswidth)
+		elmnt.width = cnvswidth;
+	elmnt = document.getElementById("stereoCanvas");
+	//if (elmnt.height != cnvsheight)
+		elmnt.height = cnvsheight;
+	//if (width != cnvswidth)
+		elmnt.width = cnvswidth;
 	
 	///////////////////////////////////
 	img = new Image();
@@ -533,8 +539,14 @@ function stereoDrawImage() {
 	document.getElementById("stereoViewer").style.backgroundColor = ctx.fillStyle;
 		
 	if (images.length > 0) {
-		var buf, bufctx, iData1, iData2;
+		var buf, bufctx, iData1, iData2, idr, idg, idb;
 		var r = new Number, g = new Number, b = new Number;
+		var index = 0;
+		var index1 = 0;
+		var index2 = 0;
+		var index1_ = 0;
+		var index2_ = 0;
+		var indexy = 0;
 		
 		function prepareAnaglyphData(inter) {
 			buf = document.createElement('canvas');
@@ -731,14 +743,21 @@ function stereoDrawImage() {
 					prepareWH2();
 					prepareAnaglyphData(false);
 					
-					for (x = 1; x < imw - 1; x++) {
-						for (y = 0; y < imh; y++) {
-							   index = (x + y * imageData.width) * 4;
-							r = iData2.data[index+0];
-							g = iData1.data[index+1];
-							b = iData1.data[index+2];
-							setPixel(imageData, x, y, r, g, b, 0xFF);
-						}
+					idr = iData2;
+					idg = iData1;
+					idb = iData1;
+					if (stereoGlasses == sGlassesGreenMagenta) {
+						idr = iData1;
+						idg = iData2;
+						idb = iData1;
+					}
+					y = imw * imh;
+					for (x = 0; x++ < y; ) {
+						// Data2 - left; Data1 - right
+						imageData.data[index] = idr.data[index++];
+						imageData.data[index] = idg.data[index++];
+						imageData.data[index] = idb.data[index++];
+						imageData.data[index] = 0xFF; index++;
 					};
 					
 					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
@@ -749,17 +768,26 @@ function stereoDrawImage() {
 					prepareWH2();
 					prepareAnaglyphData(false);
 					
-					for (x = 1; x < imw - 1; x++) {
-						for (y = 0; y < imh; y++) {
-							   index = (x + y * iData2.width) * 4;
-							// Data2 - left; Data1 - right
-							r = iData2.data[index+1] * 0.7 + iData2.data[index+2] * 0.3;
-							g = iData1.data[index+1];
-							b = iData1.data[index+2];
-							r = Math.min(Math.max(r, 0), 255);
-							setPixel(imageData, x, y, r, g, b, 0xFF);
-						}
+					idr = iData2;
+					idg = iData1;
+					idb = iData1;
+					if (stereoGlasses == sGlassesGreenMagenta) {
+						idr = iData1;
+						idg = iData2;
+						idb = iData1;
 					}
+					y = imw * imh;
+					for (x = 0; x++ < y; ) {
+						// Data2 - left; Data1 - right
+						r = idr.data[index+1] * 0.7 + idr.data[index+2] * 0.3;
+						g = idg.data[index+1];
+						b = idb.data[index+2];
+						r = Math.min(Math.max(r, 0), 255);
+						imageData.data[index++] = r;
+						imageData.data[index++] = g;
+						imageData.data[index++] = b;
+						imageData.data[index++] = 0xFF;
+					};
 				
 					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
 					_drawText(1);
@@ -769,22 +797,31 @@ function stereoDrawImage() {
 					prepareWH2();
 					prepareAnaglyphData(false);
 					
-					for (x = 1; x < imw - 1; x++) {
-						for (y = 0; y < imh; y++) {
-							   index = (x + y * imageData.width) * 4;
-							// Data2 - left; Data1 - right
-							g = iData2.data[index+1] + 0.45 * Math.max(0, iData2.data[index+0] - iData2.data[index+1]);
-							b = iData2.data[index+2] + 0.25 * Math.max(0, iData2.data[index+0] - iData2.data[index+2]);
-							r = g * 0.749 + b * 0.251;
-							//r = Math.pow(g * 0.749 + b * 0.251, 1/1.6);
-							g = iData1.data[index+1] + 0.45 * Math.max(0, iData1.data[index+0] - iData1.data[index+1]);
-							b = iData1.data[index+2] + 0.25 * Math.max(0, iData1.data[index+0] - iData1.data[index+2]);
-							r = Math.min(Math.max(r, 0), 255);
-							g = Math.min(Math.max(g, 0), 255);
-							b = Math.min(Math.max(b, 0), 255);
-							setPixel(imageData, x, y, r, g, b, 0xFF);
-						}
+					idr = iData2;
+					idg = iData1;
+					idb = iData1;
+					if (stereoGlasses == sGlassesGreenMagenta) {
+						idr = iData1;
+						idg = iData2;
+						idb = iData1;
 					}
+					y = imw * imh;
+					for (x = 0; x++ < y; ) {
+						// Data2 - left; Data1 - right
+						g = idr.data[index+1] + 0.45 * Math.max(0, idr.data[index+0] - idr.data[index+1]);
+						b = idr.data[index+2] + 0.25 * Math.max(0, idr.data[index+0] - idr.data[index+2]);
+						r = g * 0.749 + b * 0.251;
+						//r = Math.pow(g * 0.749 + b * 0.251, 1/1.6);
+						g = idg.data[index+1] + 0.45 * Math.max(0, idg.data[index+0] - idg.data[index+1]);
+						b = idb.data[index+2] + 0.25 * Math.max(0, idb.data[index+0] - idb.data[index+2]);
+						r = Math.min(Math.max(r, 0), 255);
+						g = Math.min(Math.max(g, 0), 255);
+						b = Math.min(Math.max(b, 0), 255);
+						imageData.data[index++] = r;
+						imageData.data[index++] = g;
+						imageData.data[index++] = b;
+						imageData.data[index++] = 0xFF;
+					};
 				
 					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
 					_drawText(1);
@@ -794,19 +831,28 @@ function stereoDrawImage() {
 					prepareWH2();
 					prepareAnaglyphData(false);
 					
-					for (x = 1; x < imw - 1; x++) {
-						for (y = 0; y < imh; y++) {
-							   index = (x + y * imageData.width) * 4;
-							// Data2 - left; Data1 - right
-							r = iData2.data[index+0] * 0.299 + iData2.data[index+1] * 0.587 + iData2.data[index+2] * 0.114;
-							g = iData1.data[index+0] * 0.299 + iData1.data[index+1] * 0.587 + iData1.data[index+2] * 0.114;
-							b = iData1.data[index+0] * 0.299 + iData1.data[index+1] * 0.587 + iData1.data[index+2] * 0.114;
-							r = Math.min(Math.max(r, 0), 255);
-							g = Math.min(Math.max(g, 0), 255);
-							b = Math.min(Math.max(b, 0), 255);
-							setPixel(imageData, x, y, r, g, b, 0xFF);
-						}
+					idr = iData2;
+					idg = iData1;
+					idb = iData1;
+					if (stereoGlasses == sGlassesGreenMagenta) {
+						idr = iData1;
+						idg = iData2;
+						idb = iData1;
 					}
+					y = imw * imh;
+					for (x = 0; x++ < y; ) {
+						// Data2 - left; Data1 - right
+						r = idr.data[index+0] * 0.299 + idr.data[index+1] * 0.587 + idr.data[index+2] * 0.114;
+						g = idg.data[index+0] * 0.299 + idg.data[index+1] * 0.587 + idg.data[index+2] * 0.114;
+						b = idb.data[index+0] * 0.299 + idb.data[index+1] * 0.587 + idb.data[index+2] * 0.114;
+						r = Math.min(Math.max(r, 0), 255);
+						g = Math.min(Math.max(g, 0), 255);
+						b = Math.min(Math.max(b, 0), 255);
+						imageData.data[index++] = r;
+						imageData.data[index++] = g;
+						imageData.data[index++] = b;
+						imageData.data[index++] = 0xFF;
+					};
 				
 					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
 					_drawText(1);
@@ -816,17 +862,26 @@ function stereoDrawImage() {
 					prepareWH2();
 					prepareAnaglyphData();
 					
-					for (x = 0; x < imw; x++) {
-						for (y = 0; y < imh; y++) {
-							   index = (x + y * imageData.width) * 4;
-							// Data2 - left; Data1 - right
-							r = iData2.data[index+0] * 0.299 + iData2.data[index+1] * 0.587 + iData2.data[index+2] * 0.114;
-							g = iData1.data[index+1];
-							b = iData1.data[index+2];
-							r = Math.min(Math.max(r, 0), 255);
-							setPixel(imageData, x, y, r, g, b, 0xFF);
-						}
+					idr = iData2;
+					idg = iData1;
+					idb = iData1;
+					if (stereoGlasses == sGlassesGreenMagenta) {
+						idr = iData1;
+						idg = iData2;
+						idb = iData1;
 					}
+					y = imw * imh;
+					for (x = 0; x++ < y; ) {
+						// Data2 - left; Data1 - right
+						r = idr.data[index+0] * 0.299 + idr.data[index+1] * 0.587 + idr.data[index+2] * 0.114;
+						g = idg.data[index+1];
+						b = idb.data[index+2];
+						r = Math.min(Math.max(r, 0), 255);
+						imageData.data[index++] = r;
+						imageData.data[index++] = g;
+						imageData.data[index++] = b;
+						imageData.data[index++] = 0xFF;
+					};
 				
 					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
 					_drawText(1);
@@ -836,18 +891,32 @@ function stereoDrawImage() {
 					prepareWH2();
 					prepareAnaglyphData(false);
 					
-					for (x = 1; x < imw - 1; x++) {
-						for (y = 0; y < imh; y++) {
-							   index = (x + y * imageData.width) * 4;
-							// Data2 - left; Data1 - right
-							r = iData2.data[index+0] * 0.299 + iData2.data[index+1] * 0.587 + iData2.data[index+2] * 0.114;
-							g = 0;
-							b = iData1.data[index+0] * 0.299 + iData1.data[index+1] * 0.587 + iData1.data[index+2] * 0.114;
-							r = Math.min(Math.max(r, 0), 255);
-							b = Math.min(Math.max(b, 0), 255);
-							setPixel(imageData, x, y, r, g, b, 0xFF);
-						}
+					idr = iData2;
+					idg = iData1;
+					idb = iData1;
+					if (stereoGlasses == sGlassesGreenMagenta) {
+						idr = iData1;
+						idg = iData2;
+						idb = iData2;
 					}
+					y = imw * imh;
+					for (x = 0; x++ < y; ) {
+						// Data2 - left; Data1 - right
+						r = idr.data[index+0] * 0.299 + idr.data[index+1] * 0.587 + idr.data[index+2] * 0.114;
+						if (stereoGlasses == sGlassesGreenMagenta) {
+							g = idg.data[index+0] * 0.299 + idg.data[index+1] * 0.587 + idg.data[index+2] * 0.114;
+							b = 0;
+						} else {
+							g = 0;
+							b = idb.data[index+0] * 0.299 + idb.data[index+1] * 0.587 + idb.data[index+2] * 0.114;
+						}
+						r = Math.min(Math.max(r, 0), 255);
+						b = Math.min(Math.max(b, 0), 255);
+						imageData.data[index++] = r;
+						imageData.data[index++] = g;
+						imageData.data[index++] = b;
+						imageData.data[index++] = 0xFF;
+					};
 				
 					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
 					_drawText(1);
@@ -856,14 +925,24 @@ function stereoDrawImage() {
 				case 10: //interlaced
 					prepareWH2i();
 					prepareAnaglyphData(true);
-					for (y = 0; y < imh; y++)
-						for (x = 0; x < imw; x++) {
+
+					indexy = imw * 4;
+					index2_ = indexy;
+					for (y = 0; y++ < imh; ) {
+						for (x = 0; x++ < imw; ) {
 							// Data2 - left; Data1 - right
-							index = (x + y * imageData.width) * 4;
-							setPixel(imageData, x, y * 2, iData1.data[index+0], iData1.data[index+1], iData1.data[index+2], 0xFF);
-							index = (x + y * imageData.width) * 4;
-							setPixel(imageData, x, y * 2 + 1, iData2.data[index+0], iData2.data[index+1], iData2.data[index+2], 0xFF);
+							imageData.data[index1_++] = iData1.data[index1++];
+							imageData.data[index1_++] = iData1.data[index1++];
+							imageData.data[index1_++] = iData1.data[index1++];
+							imageData.data[index1_++] = 0xFF; index1++;
+							imageData.data[index2_++] = iData2.data[index2++];
+							imageData.data[index2_++] = iData2.data[index2++];
+							imageData.data[index2_++] = iData2.data[index2++];
+							imageData.data[index2_++] = 0xFF; index2++;
 						};
+						index1_ = index1_ + indexy;
+						index2_ = index2_ + indexy;
+					};
 				
 					imh = imh * 2;
 					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
@@ -873,20 +952,25 @@ function stereoDrawImage() {
 				case 11: //interlaced vertical
 					prepareWH2iv();
 					prepareAnaglyphData(true);
-					for (x = 0; x < imw; x++)
-						for (y = 0; y < imh; y++) {
-							// Data2 - left; Data1 - right
-							index = (x + y * imw) * 4;
-							setPixel(imageData, x * 2, y, iData1.data[index+0], iData1.data[index+1], iData1.data[index+2], 0xFF);
-							index = (x + y * imw) * 4;
-							setPixel(imageData, x * 2 + 1, y, iData2.data[index+0], iData2.data[index+1], iData2.data[index+2], 0xFF);
-						};
+
+					y = imw * imh;
+					for (x = 0; x++ < y; ) {
+						// Data2 - left; Data1 - right
+						imageData.data[index1_++] = iData1.data[index1++];
+						imageData.data[index1_++] = iData1.data[index1++];
+						imageData.data[index1_++] = iData1.data[index1++];
+						imageData.data[index1_++] = 0xFF; index1++;
+						imageData.data[index1_++] = iData2.data[index2++];
+						imageData.data[index1_++] = iData2.data[index2++];
+						imageData.data[index1_++] = iData2.data[index2++];
+						imageData.data[index1_++] = 0xFF; index2++;
+					};
 				
 					imw = imw * 2;
 					ctx.putImageData(imageData, (cnvswidth - imw) / 2, (cnvsheight - mc - imh) / 2);
 					_drawText(1);
 					break;
-					
+				
 			} //switch
 			
 	} else {
@@ -956,13 +1040,27 @@ function stereoNextImage() {
 };
 
 function stereoModeChange(value) {
+	var elmnt = document.getElementById("modeselect");
 	for (var i = 0; i <= stereoModes; i++)
-		if (document.getElementById("modeselect").options[i].selected) {
+		if (elmnt.options[i].selected) {
 			stereoMode = i;
 			break;
 		};
 	stereoSwap = document.getElementById("stereoSwap").checked;
 	stereoCaption = document.getElementById("stereoCap").checked;
+	
+	stereoCorrectAfterMode();
+	
+	stereoDrawImage()
+};
+
+function stereoGlassesChange() {
+	var elmnt = document.getElementById("stereoGlasses");
+	for (var i = 0; i < elmnt.options.length; i++)
+		if (elmnt.options[i].selected) {
+			stereoGlasses = i;
+			break;
+		};
 	stereoDrawImage()
 };
 
@@ -979,8 +1077,12 @@ function stereoKeyPress(e) {
 	function _mode(value) {
 		stereoMode = value;
 		stereoDrawImage();
+		var elmnt = document.getElementById("modeselect");
 		for (var i = 0; i <= stereoModes; i++)
-			document.getElementById("modeselect").options[i].selected = stereoMode == i;
+			elmnt.options[i].selected = stereoMode == i;
+
+		stereoCorrectAfterMode();
+
 	};
 	
 	switch (keynum) {
@@ -1041,9 +1143,9 @@ function stereoBG(c) {
 
 function stereoSaveDef() {
 	if (stereoGetCookie() < 0)
-		stereoSetCookie(stereoMode, stereoSwap ? 1 : 0)
+		stereoSetCookie(stereoMode, stereoSwap ? 1 : 0, stereoGlasses)
 	else
-		stereoSetCookie(-1, stereoSwap ? 1 : 0);
+		stereoSetCookie(-1, stereoSwap ? 1 : 0, 0);
 	stereoCheckCookie();
 };
 
@@ -1054,11 +1156,13 @@ function stereoCheckCookie() {
 	else
 		document.getElementById("stereoSaveDef").value = "Save as Default";
 	document.getElementById("stereoSwap").checked = stereoGetCookieSwap() > 0;
+	//document.getElementById("stereoGlasses").checked = stereoGetCookieGlasses();
 };
 
-function stereoSetCookie(m, s) {
+function stereoSetCookie(m, s, gm) {
 	document.cookie = "HTML5_STEREO_VIEWER=" + escape(m.toString());
 	document.cookie = "HTML5_STEREO_VIEWER_SWAP=" + escape(s.toString());
+	document.cookie = "HTML5_STEREO_VIEWER_GLASSES=" + escape(gm.toString());
 };
 
 function stereoGetCookie() {
@@ -1076,3 +1180,19 @@ function stereoGetCookieSwap() {
 			return parseInt(unescape(a[i].substr(a[i].indexOf("=")+1)));
 	return false;
 };
+
+function stereoGetCookieGlasses() {
+	var a = document.cookie.split(";");
+	for (var i = 0; i < a.length; i++)
+		if (a[i].substr(0,a[i].indexOf("=")).trim() == "HTML5_STEREO_VIEWER_GLASSES")
+			return parseInt(unescape(a[i].substr(a[i].indexOf("=")+1)));
+	return false;
+};
+
+function stereoCorrectAfterMode() {
+	if ((stereoMode <= (stereoModes - 2)) & (stereoMode >= 4)) {
+		document.getElementById("stereoGlasses").style.visibility = "inherit";
+	} else {
+		document.getElementById("stereoGlasses").style.visibility = "hidden";
+	}
+}
