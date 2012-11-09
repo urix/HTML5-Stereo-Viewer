@@ -2,7 +2,7 @@
 
 HTML5 Stereo Viewer
 
-version 1.3
+version 1.4
 
 Copyright (C) 2011 Yury Golubinsky
 
@@ -13,7 +13,7 @@ visit http://creativecommons.org/licenses/by/3.0/
 
 */
 
-var stereover = "1.3";
+var stereover = "1.4";
 var images = new Array();
 var imagesT = new Array();
 var imagesC = new Array();
@@ -29,6 +29,8 @@ var stereoCaption = true;
 var stereoCaptionSrc = "alt";
 var stereoDefType = "stereoRL";
 var stereoiOS = false;
+var stereoiOS_iPad = false;
+var stereoiOS_iPhone = false;
 var stereoIE = false;
 var stereourl = "http://urixblog.com/html5-stereo-viewer";
 var stereourlvis = "http://urixblog.com/...";
@@ -36,7 +38,8 @@ var stereoModes = 11;
 var stereoGlasses = 0;
 	var sGlassesRedCyan = 0;
 	var sGlassesGreenMagenta = 1;
-
+var stereoFirstTimeHelpDisplayed = true;
+	
 function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	/*
 	Mode		- stereo mode (0..9...). Default: 5
@@ -58,7 +61,9 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	if (Swap != undefined)
 		stereoSwap = Swap;
 
-	stereoiOS = (navigator.appVersion.indexOf("iPhone") != -1) | (navigator.appVersion.indexOf("iPad") != -1) | (navigator.appVersion.indexOf("iPod") != -1);
+	stereoiOS_iPhone = (navigator.appVersion.indexOf("iPhone") != -1) | (navigator.appVersion.indexOf("iPod") != -1);
+	stereoiOS_iPad = (navigator.appVersion.indexOf("iPad") != -1);
+	stereoiOS = stereoiOS_iPad | stereoiOS_iPhone;
 	if (stereoiOS)
 		stereoNav = 0;
 		
@@ -137,7 +142,8 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 				<tr><td><b>Right Arrow&nbsp;&nbsp;</b></td><td> - &nbsp;&nbsp;next image</tr>\
 				<tr><td><b>Left Arrow&nbsp;&nbsp;</b></td><td> - &nbsp;&nbsp;previous image</tr>\
 				<tr><td><b>0..9&nbsp;&nbsp;</b></td><td> - &nbsp;&nbsp;change mode</tr>\
-				</table></center>\
+				</table>\
+				<br /><input type="button" value="OK" onclick="stereoViewerOptionsOpen(false);" /></center>\
 			</div>\
 			<div id="stereoAbout" style="z-index:3; position:fixed; background-color:#fff; opacity:.9; padding:16px; margin:0px; border:1px; border-style:solid; border-color:black; visibility:hidden; top:16px; right:16px;\
 					-moz-box-shadow: 1px 4px 10px rgba(68,68,68,0.6);\
@@ -155,7 +161,7 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 			
 	document.body.insertBefore(div, document.body.firstChild);
 
-	if (stereoiOS) {
+	if (stereoiOS & !stereoiOS_iPad) {
 		document.getElementById("stereoControls").innerHTML = '\
 			<center><input type="button" value="Hide Options" onclick="stereoViewerOptionsOpen(false);" />\
 			<input type="button" value="Close Viewer" onclick="stereoViewerClose();" /></center>\
@@ -240,7 +246,7 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	if (stereoiOS) {
 		meta = document.createElement("meta");
 		meta.name = "viewport";
-		meta.content = "width = device-width, initial-scale = 1.0, user-scalable = no";
+		meta.content = "width = device-width; initial-scale = 1.0; user-scalable = no; maximum-scale=1.0; minimum-scale=1.0; target-densityDpi=device-dpi;";
 		var b = false;
 		for (var i = 0; i < document.getElementsByTagName("head")[0].childNodes.length; i++)
 			if (document.getElementsByTagName("head")[0].childNodes[i].name == "viewport") {
@@ -254,6 +260,12 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 	
 	stereoCountImages();
 	stereoDrawImage();
+	
+	stereoGetCookieForFirstTimeHelpDisplayed();
+	if (stereoFirstTimeHelpDisplayed & !stereoiOS_iPhone) {
+		stereoHelpOpen();
+		stereoSetCookieForFirstTimeHelpDisplayed();
+	}
 };
 
 function stereoViewerClose() {
@@ -263,7 +275,7 @@ function stereoViewerClose() {
 	if (stereoiOS) {
 		meta = document.createElement("meta");
 		meta.name = "viewport";
-		meta.content = "width = device-width, initial-scale = 1.0, user-scalable = yes";
+		meta.content = "width = device-width; initial-scale = 1.0; user-scalable = yes;";
 		for (var i = 0; i < document.getElementsByTagName("head")[0].childNodes.length; i++)
 			if (document.getElementsByTagName("head")[0].childNodes[i].name == "viewport") {
 				document.getElementsByTagName("head")[0].replaceChild(meta, document.getElementsByTagName("head")[0].childNodes[i]);
@@ -537,7 +549,7 @@ function stereoDrawImage() {
 	};
 	ctx.fillRect(stereoNav, 0, cnvswidth - stereoNav * 2, cnvsheight);
 	document.getElementById("stereoViewer").style.backgroundColor = ctx.fillStyle;
-		
+
 	if (images.length > 0) {
 		var buf, bufctx, iData1, iData2, idr, idg, idb;
 		var r = new Number, g = new Number, b = new Number;
@@ -576,24 +588,26 @@ function stereoDrawImage() {
 		};
 		
 		function _getLines(phrase, maxPxLength) {
-		    var wa = phrase.split(" ");
 			var phraseArray = [];
-			var lastPhrase = "";
-			var l = maxPxLength;
-			var measure = 0;
-		    for (var i=0; i < wa.length; i++) {
-		        var w = wa[i];
-		        measure = ctx.measureText(lastPhrase + w).width;
-		        if (measure < l)
-		            lastPhrase += (" "+w)
-		        else {
-		            phraseArray.push(lastPhrase);
-		            lastPhrase = w;
-		        };
-		        if (i === wa.length - 1) {
-		            phraseArray.push(lastPhrase);
-		            break;
-		        }
+			if (phrase != null) {
+			    var wa = phrase.split(" ");
+				var lastPhrase = "";
+				var l = maxPxLength;
+				var measure = 0;
+			    for (var i=0; i < wa.length; i++) {
+			        var w = wa[i];
+			        measure = ctx.measureText(lastPhrase + w).width;
+			        if (measure < l)
+			            lastPhrase += (" "+w)
+			        else {
+			            phraseArray.push(lastPhrase);
+			            lastPhrase = w;
+			        };
+			        if (i === wa.length - 1) {
+			            phraseArray.push(lastPhrase);
+			            break;
+			        };
+			    };
 		    };
 		    return phraseArray;
 		};
@@ -674,7 +688,7 @@ function stereoDrawImage() {
 		}
 		else
 		if (!img.complete) {
-			img.onLoad = stereoDrawImage;
+			img.onload = stereoDrawImage;
 			ctx.font = "bold 12px sans-serif";
 			ctx.textAlign = "center";
 			ctx.textBaseline = "middle";
@@ -713,7 +727,7 @@ function stereoDrawImage() {
 						_drawText(2);
 					break;
 					
-				case 2: //only Left
+				case 3: //only Left
 					prepareWH2();
 					if (imagesT[imageN] == "stereoLR")
 						stereoSwap_ = !stereoSwap_;
@@ -726,7 +740,7 @@ function stereoDrawImage() {
 					_drawText(1);
 					break;
 					
-				case 3: //only Right
+				case 2: //only Right
 					prepareWH2();
 					if (imagesT[imageN] == "stereoLR")
 						stereoSwap_ = !stereoSwap_;
@@ -972,7 +986,6 @@ function stereoDrawImage() {
 					break;
 				
 			} //switch
-			
 	} else {
 		ctx.font = "bold 12px sans-serif";
 		ctx.textAlign = "center";
@@ -1163,6 +1176,21 @@ function stereoSetCookie(m, s, gm) {
 	document.cookie = "HTML5_STEREO_VIEWER=" + escape(m.toString());
 	document.cookie = "HTML5_STEREO_VIEWER_SWAP=" + escape(s.toString());
 	document.cookie = "HTML5_STEREO_VIEWER_GLASSES=" + escape(gm.toString());
+};
+
+function stereoSetCookieForFirstTimeHelpDisplayed() {
+	document.cookie = "HTML5_STEREO_VIEWER_FIRST_TIME_HELP_DISPLAYED=YES";
+};
+
+function stereoGetCookieForFirstTimeHelpDisplayed() {
+	stereoFirstTimeHelpDisplayed = true;
+	var a = document.cookie.split(";");
+	for (var i = 0; i < a.length; i++)
+		if (a[i].substr(0,a[i].indexOf("=")).trim() == "HTML5_STEREO_VIEWER_FIRST_TIME_HELP_DISPLAYED") {
+			stereoFirstTimeHelpDisplayed = (unescape(a[i].substr(a[i].indexOf("=")+1)) != "YES");
+			return stereoFirstTimeHelpDisplayed;
+			}
+	return stereoFirstTimeHelpDisplayed;
 };
 
 function stereoGetCookie() {
