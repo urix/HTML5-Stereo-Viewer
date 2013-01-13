@@ -2,7 +2,7 @@
 
 HTML5 Stereo Viewer
 
-version 1.4
+version 1.5
 
 Copyright (C) 2011 Yury Golubinsky
 
@@ -13,7 +13,7 @@ visit http://creativecommons.org/licenses/by/3.0/
 
 */
 
-var stereover = "1.4";
+var stereover = "1.5";
 var images = new Array();
 var imagesT = new Array();
 var imagesC = new Array();
@@ -142,6 +142,7 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 				<tr><td><b>Right Arrow&nbsp;&nbsp;</b></td><td> - &nbsp;&nbsp;next image</tr>\
 				<tr><td><b>Left Arrow&nbsp;&nbsp;</b></td><td> - &nbsp;&nbsp;previous image</tr>\
 				<tr><td><b>0..9&nbsp;&nbsp;</b></td><td> - &nbsp;&nbsp;change mode</tr>\
+				<tr><td><b>s&nbsp;&nbsp;</b></td><td> - &nbsp;&nbsp;swap left/right</tr>\
 				</table>\
 				<br /><input type="button" value="OK" onclick="stereoViewerOptionsOpen(false);" /></center>\
 			</div>\
@@ -577,7 +578,22 @@ function stereoDrawImage() {
 			
 			if (imagesT[imageN] == "stereoLR")
 				stereoSwap_ = !stereoSwap_;
-			if (!stereoSwap_) {
+				
+			var ssw = stereoSwap_;
+			if (inter) {
+				switch (stereoMode_) {
+					case 10:
+						if (((cnvsheight - mc - imh * 2) / 2) % 2 == 0)
+							ssw = !ssw;
+						break;
+					case 11:
+						if (((cnvswidth - imw * 2) / 2) % 2 == 0)
+							ssw = !ssw;
+						break;
+				};
+			};
+				
+			if (!ssw) {
 				iData1 = bufctx.getImageData(0, 0, imw, imh);
 				iData2 = bufctx.getImageData(imw, 0, imw, imh)
 			}
@@ -1107,6 +1123,10 @@ function stereoKeyPress(e) {
 		case 27:
 			stereoViewerClose();
 			break; 
+		case 83: //"s"
+			document.getElementById("stereoSwap").checked = !stereoSwap;
+			stereoModeChange(stereoMode);
+			break;
 		// Navigation
 		case 37: 
 		case 38: 
@@ -1173,13 +1193,13 @@ function stereoCheckCookie() {
 };
 
 function stereoSetCookie(m, s, gm) {
-	document.cookie = "HTML5_STEREO_VIEWER=" + escape(m.toString());
-	document.cookie = "HTML5_STEREO_VIEWER_SWAP=" + escape(s.toString());
-	document.cookie = "HTML5_STEREO_VIEWER_GLASSES=" + escape(gm.toString());
+	document.cookie = "HTML5_STEREO_VIEWER=" + escape(m.toString()) + "; path=/";
+	document.cookie = "HTML5_STEREO_VIEWER_SWAP=" + escape(s.toString()) + "; path=/";
+	document.cookie = "HTML5_STEREO_VIEWER_GLASSES=" + escape(gm.toString()) + "; path=/";
 };
 
 function stereoSetCookieForFirstTimeHelpDisplayed() {
-	document.cookie = "HTML5_STEREO_VIEWER_FIRST_TIME_HELP_DISPLAYED=YES";
+	document.cookie = "HTML5_STEREO_VIEWER_FIRST_TIME_HELP_DISPLAYED=YES" + "; path=/";
 };
 
 function stereoGetCookieForFirstTimeHelpDisplayed() {
