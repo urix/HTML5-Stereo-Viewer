@@ -13,7 +13,7 @@ visit http://creativecommons.org/licenses/by/3.0/
 
 */
 
-var stereover = "1.5";
+var stereover = "1.6";
 var images = new Array();
 var imagesT = new Array();
 var imagesC = new Array();
