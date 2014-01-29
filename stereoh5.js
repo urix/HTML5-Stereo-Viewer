@@ -34,6 +34,7 @@ var stereoiOS_iPhone = false;
 var stereoIE = false;
 var stereourl = "http://urixblog.com/html5-stereo-viewer";
 var stereourlvis = "http://urixblog.com/...";
+var stereoCPRGHT = "(C) 2011-2014 Yury Golubinsky";
 var stereoModes = 11;
 var stereoGlasses = 0;
 	var sGlassesRedCyan = 0;
@@ -153,8 +154,8 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 					filter: progid:DXImageTransform.Microsoft.Blur(PixelRadius=3,MakeShadow=true,ShadowOpacity=0.30);\
 					-ms-filter: "progid:DXImageTransform.Microsoft.Blur(PixelRadius=3,MakeShadow=true,ShadowOpacity=0.30)";">\
 				<center><b>HTML5 Stereo Viewer</b><br />\
-				version '+stereover+'<br /><br />\
-				(C) 2011 Yury Golubinsky<br /><br />\
+				version '+stereover+'<br /><br />'
+				+stereoCPRGHT+'<br /><br />\
 				<a href="'+stereourl+'">'+stereourl+'</a>\
 				<br /><br /><hr /><br />\
 				<a rel="license" href="http://creativecommons.org/licenses/by/3.0/" title="This work is licensed under a Creative Commons Attribution 3.0 Unported License"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/88x31.png" /></a>\
@@ -197,8 +198,8 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 			<br />\
 			<input type="checkbox" value="" onclick="stereoModeChange(stereoMode);" id="stereoCap" /> Show captions<br />\
 			<hr />\
-				<center><b>HTML5 Stereo Viewer '+stereover+'</b><br />\
-				(C) 2011 Yury Golubinsky<br />\
+				<center><b>HTML5 Stereo Viewer '+stereover+'</b><br />'
+				+stereoCPRGHT+'<br />\
 				<a href="'+stereourl+'">'+stereourlvis+'</a>\
 				<br /><br />\
 				<a rel="license" href="http://creativecommons.org/licenses/by/3.0/"><img alt="Creative Commons License" style="border-width:0" src="http://i.creativecommons.org/l/by/3.0/88x31.png" /></a>\
