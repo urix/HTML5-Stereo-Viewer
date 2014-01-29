@@ -2,9 +2,9 @@
 
 HTML5 Stereo Viewer
 
-version 1.5
+version 1.6
 
-Copyright (C) 2011 Yury Golubinsky
+Copyright (C) 2011-2014 Yury Golubinsky
 
 This work is licensed under the
 Creative Commons Attribution 3.0 Unported License.
@@ -271,18 +271,20 @@ function stereoViewerOpen(Mode, Swap, BGColor, Caption, CaptionSrc, Type) {
 
 function stereoViewerClose() {
 	stereoViewerOptionsOpen(false);
-	document.body.removeChild(document.getElementById("stereoViewer"));
-
-	if (stereoiOS) {
-		meta = document.createElement("meta");
-		meta.name = "viewport";
-		meta.content = "width = device-width; initial-scale = 1.0; user-scalable = yes;";
-		for (var i = 0; i < document.getElementsByTagName("head")[0].childNodes.length; i++)
-			if (document.getElementsByTagName("head")[0].childNodes[i].name == "viewport") {
-				document.getElementsByTagName("head")[0].replaceChild(meta, document.getElementsByTagName("head")[0].childNodes[i]);
-				break;
-			}
-	};
+	if (document.getElementById("stereoViewer") != null) {
+		document.body.removeChild(document.getElementById("stereoViewer"));
+	
+		if (stereoiOS) {
+			meta = document.createElement("meta");
+			meta.name = "viewport";
+			meta.content = "width = device-width; initial-scale = 1.0; user-scalable = yes;";
+			for (var i = 0; i < document.getElementsByTagName("head")[0].childNodes.length; i++)
+				if (document.getElementsByTagName("head")[0].childNodes[i].name == "viewport") {
+					document.getElementsByTagName("head")[0].replaceChild(meta, document.getElementsByTagName("head")[0].childNodes[i]);
+					break;
+				}
+		};
+	}
 };
 
 function setPixel(imageData, x, y, r, g, b, a) {
@@ -339,16 +341,18 @@ function stereoMouseClick(event) {
 };
 
 function stereoViewerOptionsOpen(value) {
-	if (value)
-		var s = "visible"
-	else
-		var s = "hidden";
-	document.getElementById("stereoControls").style.visibility = s;
-	if (!value) {
-		document.getElementById("stereoHelp").style.visibility = s;
-		document.getElementById("stereoAbout").style.visibility = s
-	};
-	stereoOptVis = value
+	if (document.getElementById("stereoControls") != null) {
+		if (value)
+			var s = "visible"
+		else
+			var s = "hidden";
+		document.getElementById("stereoControls").style.visibility = s;
+		if (!value) {
+			document.getElementById("stereoHelp").style.visibility = s;
+			document.getElementById("stereoAbout").style.visibility = s
+		};
+		stereoOptVis = value;
+	}
 };
 
 function stereoHelpOpen(value) {
