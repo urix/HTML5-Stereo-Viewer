@@ -1044,7 +1044,9 @@ function stereoCountImages() {
 	for (j = 0; j < document.images.length; j++) {
 		var cn = getClassName(document.images[j], new Array("anaglyph", "flat", "stereo", "stereoLR", "stereoRL"));
 		if (cn != "") {
-			images[n] = document.images[j].src;
+            var imgElement = document.images[j];
+            var resolvedSrc = (imgElement.currentSrc && imgElement.currentSrc.length > 0) ? imgElement.currentSrc : imgElement.src;
+            images[n] = resolvedSrc;
 			imagesC[n] = document.images[j].getAttribute(stereoCaptionSrc);
 			imagesT[n] = cn;
 			if (imagesT[n] == "stereo")

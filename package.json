@@ -1,0 +1,24 @@
+{
+  "name": "workspace",
+  "version": "1.0.0",
+  "description": "",
+  "main": "stereoh5.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/urix/HTML5-Stereo-Viewer.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/urix/HTML5-Stereo-Viewer/issues"
+  },
+  "homepage": "https://github.com/urix/HTML5-Stereo-Viewer#readme",
+  "devDependencies": {
+    "sharp": "^0.34.4",
+    "terser": "^5.44.0"
+  }
+}
