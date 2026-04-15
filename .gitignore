@@ -1,4 +1,5 @@
 .gitignore
+.DS_Store
 stereo.psd
 stereo256.jpg
 stereo512.jpg
